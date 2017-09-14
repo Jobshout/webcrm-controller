@@ -51,7 +51,7 @@ var self = module.exports =
 	
 	returnBookmarks : function (db, init, catArr, tagsArr, defaultbool, cb){
 		if(defaultbool==true || defaultbool=="true")	{
-			if(tagsArr && tagsArr.length>0){
+			if(tagsArr && tagsArr!="" && tagsArr.length>0){
 				var formTagsStr= "";
 				for(var i=0; i < tagsArr.length; i++){
 					formTagsStr+= ' "'+tagsArr[i]+'" ';

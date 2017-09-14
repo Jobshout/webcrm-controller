@@ -19,7 +19,12 @@ module.exports = function(init, app, db){
 	var mongodb=init.mongodb;
 	var gfs = Grid(db, mongodb);
 	
-	var navigationCategoriesArr = new Array('footer-nav', 'top-navigation');
+	if(init.navigationCategoriesArr && init.navigationCategoriesArr!="" && init.navigationCategoriesArr.length>0){
+		var navigationCategoriesArr = init.navigationCategoriesArr;
+	}else{
+		var navigationCategoriesArr = new Array('footer-nav', 'top-navigation');
+	}
+	
 //api collection_details
 app.get('/collection_details', function(req, res) {
 	var outputObj = new Object();
