@@ -25,7 +25,7 @@ module.exports = function(init, app, db){
 		var navigationCategoriesArr = new Array('footer-nav', 'top-navigation');
 	}
 	
-//api collection_details
+//api collection_details(GET): to fetch the [documents] details
 app.get('/collection_details', function(req, res) {
 	var outputObj = new Object();
 	
@@ -45,7 +45,7 @@ app.get('/collection_details', function(req, res) {
 	}
 });
 
-//unsubscribe
+//unsubscribe for newsletter
 app.get('/unsubscribe', returnNavigation, function(req, res) {
 	var email_to='', contact_uuid= '', uuid='', unsubscribed=1, status="unsubscribe";
 	if(req.query.email_to){
@@ -121,7 +121,10 @@ app.get('/unsubscribe', returnNavigation, function(req, res) {
     }
 })
 
-//search results page
+/** search results page (in documents table)
+parameters : start, limit, type, tags
+Description : it search for all records with active status(1) and defined for this website and also shared with this website
+**/
 app.get('/search-results', function(req, res) {
 	var myObj = new Object();
 	var itemsPerPage = 10, pageNum=1;
@@ -185,7 +188,7 @@ app.get('/search-results', function(req, res) {
        	});
 	});
 
-//api for save contact
+//api for save contact (POST), saved in table= "website_enquiries" and also create record of email which will be sent to admin
 app.post('/savecontact', (req, res) => {
 	var responseObj = new Object();
 	var postJson=req.body;
@@ -218,7 +221,7 @@ app.post('/savecontact', (req, res) => {
   	});	
 })
 
-//save blog comment
+//save blog comments which will be saved in same record as sub object, and also create email for admin
 app.post('/saveblogcomment', (req, res) => {
 	var postJson=req.body;
 	postJson.created=initFunctions.nowTimestamp();
@@ -295,7 +298,7 @@ app.get('/fetch_tokens_content', function(req, res) {
     }
 });
 
-//fetch tweets
+//fetch tweets, secure details are stored in 'system_lists' table
 app.get('/fetchTweets', function(req, res) {
 	db.collection('system_lists').findOne({code: "twitter-details"}, function(err, listDetails) {
 		var consumer_key_str = process.env.TWITTER_CONSUMER_KEY;
@@ -333,9 +336,10 @@ app.get('/fetchTweets', function(req, res) {
 		});
 	});
 });
-// fetch blog archives
+// fetch videos
 app.get('/fetch_videos', function(req, res) {
 	var myObj = new Object();
+	//find all categories defined (Because videos are displayed acc. to category)
 	db.collection('categories').find({status: { $in: [ 1, "1" ] }, $or: [ { uuid_system : { $in: [init.system_id] } }, { shared_systems: { $in: [init.system_id] } } ] }, {name :1, order_by_num : 1}).sort({order_by_num : -1}).toArray(function(avaErr, documents) {
 		if(documents && documents.length>0){
 			myObj["categories"]   = documents;
@@ -358,6 +362,7 @@ app.get('/fetch_videos', function(req, res) {
 		}
    	});
 });
+
 // fetch blog archives
 app.get('/fetch_blog_archives', function(req, res) {
 	var myObj = new Object();
@@ -389,7 +394,8 @@ app.get('/fetch_blog_archives', function(req, res) {
 		}
    	});
 });
-//api_fetch_navigation
+
+//get_category_lists: return all categories details even with bookmarks defined for categories, default categories are defined in configuration file
 app.get('/get_category_lists', function(req, res) {
 	var responseObj = new Object();
 	if(req.query.category && req.query.category!=""){
@@ -481,6 +487,7 @@ app.get('/:id', function(req, res) {
     });
 });
 
+//return the navigation depending upon categories passed
 function returnNavigation (req, res, next) {
 	initFunctions.returnBookmarks(db, init, navigationCategoriesArr, new Array(), true, function(resultNav) {
 		req.navigation=resultNav;
