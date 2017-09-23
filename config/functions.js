@@ -9,11 +9,12 @@
 	**/
 
 	/**********************************************************************
-	*  functions.js contain all the functions required for requests
+	*  functions.js contain all the functions required for requests, these functions are called from main file
 	**/
 	
 var self = module.exports = 
 {
+	//return date according to the format and timestamp passed
 	dateParameters : function (UNIX_timestamp, dateformat){
 		var a = new Date(UNIX_timestamp * 1000);
 		var year = a.getFullYear();
@@ -29,7 +30,7 @@ var self = module.exports =
   			return  date+' '+month+' '+year;
   		}
 	},
-  	// These functions which will be called in the main file, which is server.js
+  	//to find one record depending upon table/collection name and search id(mongodb unique id) passed
   	returnFindOneByMongoID : function (db, init, collectionName, search_id, cb){
 		var outputObj = new Object();
 		var mongodb=init.mongodb;
@@ -43,12 +44,14 @@ var self = module.exports =
      		}
 		});
 	},
-	
+	//returns current timestamp
 	nowTimestamp : function (){
 		var timeStampStr=Math.round(new Date().getTime()/1000)
 		return timeStampStr;
 	},
-	
+	/** return bookmarks.navigation
+	parameters : db(database connection), init(constants defined in config file), catArr(categories, defined in config file), tagsArr (tags defined for templates or documents), defaultBool(to return default navigation), cb(callback)
+	**/
 	returnBookmarks : function (db, init, catArr, tagsArr, defaultbool, cb){
 		if(defaultbool==true || defaultbool=="true")	{
 			if(tagsArr && tagsArr!="" && tagsArr.length>0){
@@ -56,6 +59,7 @@ var self = module.exports =
 				for(var i=0; i < tagsArr.length; i++){
 					formTagsStr+= ' "'+tagsArr[i]+'" ';
 				}
+				// return all the navigation with matching tags
 				db.collection('bookmarks').find({"uuid_system" : init.system_id, "status": { $in: [ 1, "1" ] } , "categories": { $in: catArr }, $text: { $search: formTagsStr }}).sort( { order_by_num: 1 } ).toArray(function(err, tokens_result) {
 					if(err) {
 						return cb(null);
@@ -77,12 +81,14 @@ var self = module.exports =
 				});
 			}
 		}	else	{
+			//return default assigned navigation of the system
 			db.collection('bookmarks').find({"uuid_system" : init.system_id, "status": { $in: [ 1, "1" ] } , "categories": { $in: catArr }}).sort( { order_by_num: 1 } ).toArray(function(err, tokens_result) {
 				if(err) return cb(null)
 				cb(tokens_result);
 			});
 		}
 	},
+	//to generate 36 character length unique value
 	guid : function () {
   		function s4() {
     		return Math.floor((1 + Math.random()) * 0x10000)
@@ -91,7 +97,11 @@ var self = module.exports =
   		}
   		return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 	},
-	
+
+/**
+parameters : db, init(constants passed), req_params_id(search id), res(response parameter), navigationCategoriesArr(passed the categories defined)
+description : search for the template defined, process the template (if any token are added in template content)
+**/
 searchForTemplate : function (db, init, req_params_id, res, navigationCategoriesArr) {
 	db.collection('templates').findOne({code: req_params_id, uuid_system : init.system_id, status: { $in: [ 1, "1" ] } }, function(templateErr, returnTemplateContent) {
 		if (returnTemplateContent) {
@@ -110,6 +120,7 @@ searchForTemplate : function (db, init, req_params_id, res, navigationCategories
    	});
 },
 
+/** function to find tokens in templates, parameter: template content passed, returns all the found tokens list **/
 findTokensListInTemplate : function (templateContentStr) {
 	var findTokensStr= '', searchParaCount=4, tempContentStr=templateContentStr;
 	var findTokenStartingPos = tempContentStr.indexOf("<*--");
@@ -142,6 +153,7 @@ escapeRegExp : function (str) {
     return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
 },
 
+/** process tokens in the templates **/
 templateProcessTokens : function (db, init, templateContentStr, processedTokenList, cb){
 	var outputResponseStr=templateContentStr, recursionOccurredToken='';
 	var listOfTokensStr= self.findTokensListInTemplate(outputResponseStr);

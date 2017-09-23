@@ -336,7 +336,7 @@ app.get('/fetchTweets', function(req, res) {
 		});
 	});
 });
-// fetch videos
+// fetching videos depending upon categories
 app.get('/fetch_videos', function(req, res) {
 	var myObj = new Object();
 	//find all categories defined (Because videos are displayed acc. to category)
@@ -420,7 +420,7 @@ app.get('/', function(req, res) {
 	initFunctions.searchForTemplate(db, init, 'index', res, navigationCategoriesArr);
 });
 
-//fetch uploaded file content
+//to view file in browser, fetch its content from db, parameters : filename
 app.get('/file/:filename', function(req, res){
         /** First check if file exists */
         gfs.files.find({'metadata.uuid': req.params.filename}).toArray(function(err, files){
@@ -444,10 +444,12 @@ app.get('/file/:filename', function(req, res){
         });
 });
 
-//display video details
+/** display video details
+parameters : id(which contain the code of video, unique field) assigned for the system **/
 app.get('/video-:id', function(req, res) {
 	db.collection('videos').findOne({code: req.params.id, uuid_system : init.system_id}, function(video_err, video_content) {
 		if(video_content){
+			//return bookmarks/navigation with each request
 	 		initFunctions.returnBookmarks(db, init, navigationCategoriesArr, new Array(), true, function(resultNav) {
 				res.render('video', {
        				document_details: video_content,
@@ -460,10 +462,14 @@ app.get('/video-:id', function(req, res) {
 	});
 });
 
-//content page or template
+/** to fetch and display templates or web pages
+parameters : id(code as unique field)
+**/
 app.get('/:id', function(req, res) {
+	//check first in documents table for the website
       db.collection('documents').findOne({Code: req.params.id, uuid_system : init.system_id}, function(err, document) {
       	if (document) {
+      		//find navigation if available for this document depending upon the matching tags
 			initFunctions.returnBookmarks(db, init, navigationCategoriesArr, document.tags, true, function(resultNav) {
 				res.render('content', {
        				document_details: document,
@@ -471,8 +477,10 @@ app.get('/:id', function(req, res) {
     			});
     		});
     	} else {
+    		//to check if this document is shared from some other website
     		db.collection('documents').findOne({Code: req.params.id, shared_systems : { $in: [init.system_id] }}, function(err, document) {
 				if (document) {
+					//find navigation if available for this document depending upon the matching tags
 					initFunctions.returnBookmarks(db, init, navigationCategoriesArr, document.tags, true, function(resultNav) {
 						res.render('content', {
        						document_details: document,
@@ -480,6 +488,7 @@ app.get('/:id', function(req, res) {
        					});
     				});
     			} else {
+    				//search for template if no document or web page found
     				initFunctions.searchForTemplate(db, init, req.params.id, res, navigationCategoriesArr);
     			}
     		});
