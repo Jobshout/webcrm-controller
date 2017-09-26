@@ -139,7 +139,7 @@ app.get('/search-results', function(req, res) {
 	}
 	var type = req.query.type, tags = req.query.tags, data='', truncate = 250;
 	var query='{ "status": { $in: [ 1, "1" ]}', fetchFieldsObj="{}";
-	if(type=="blog" || type=="news"){
+	if(type!=""){
 		query= '{ "Type" : "'+type+'", "status": { $in: [ 1, "1" ] } ';
 	}
 	
